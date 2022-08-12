@@ -49,6 +49,7 @@ function dishesPropertyIsValid(req, res, next) {
 function dishQuantityIsValid(req, res, next) {
     const {data: { dishes } = {} } = req.body
     for (let dish in dishes) {
+        const index = dishes.findIndex(dish)
         if (dish.quantity <= 0 || !Number.isInteger(dish.quantity)) {
             next({
                 status: 400,

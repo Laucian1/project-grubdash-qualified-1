@@ -37,7 +37,7 @@ function priceIsValidNumber(req, res, next) {
 function create(req, res) {
     const { data: { name, description, price, image_url } = {} } = req.body
     const newDish = {
-        id: nextId,
+        id: nextId(),
         name,
         description,
         price,
@@ -61,7 +61,7 @@ function dishExists(req, res, next) {
 }
 
 function read(req, res) {
-    res.json({ data: res.locals.paste })
+    res.json({ data: res.locals.dish })
 }
 
 function idMatch(req, res, next) {
