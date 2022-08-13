@@ -19,43 +19,32 @@ function bodyDataHas(propertyName) {
         }
         next({
             status: 400,
-            message: `Order must include a ${propertyName}`
+            message: `Order must include a 
+                ${propertyName === "dishes" ? "dish" : propertyName}` 
+            
         })
     }
-}
-
-function bodyDataHasDish(req, res, next) {
-    const { data: { dishes } = {} } = req.body
-    if (dishes) {
-        return next()
-    }
-    next({
-        status: 400,
-        message: "Order must include a dish"
-    })
 }
 
 function dishesPropertyIsValid(req, res, next) {
     const {data: { dishes } = {} } = req.body
-    if (dishes.length < 1) {
-        next({
-            status: 400,
-            message: "Order must include at least one dish"
-        })
+    if (Array.isArray(dishes) && dishes.length > 0) {
+        return next()
     }
-    return next()
+    next({
+        status: 400,
+        message: "Order must include at least one dish"
+    })
 }
 
 function dishQuantityIsValid(req, res, next) {
     const {data: { dishes } = {} } = req.body
-    for (let dish in dishes) {
-        const index = dishes.findIndex(dish)
-        if (dish.quantity <= 0 || !Number.isInteger(dish.quantity)) {
-            next({
-                status: 400,
-                message: `Dish ${index} must have a quantity that is an integer greater than 0`
-            })
-        }
+    const index = dishes.findIndex((dish) => dish.quantity <= 0 || !Number.isInteger(dish.quantity))
+    if (index > -1) {
+        next({
+            status: 400,
+            message: `Dish ${index} must have a quantity that is an integer greater than 0`
+        })
     }
     return next()
 }
@@ -63,7 +52,7 @@ function dishQuantityIsValid(req, res, next) {
 function create(req, res) {
     const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body
     const newOrder = {
-        id: nextId,
+        id: nextId(),
         deliverTo,
         mobileNumber,
         status,
@@ -93,7 +82,7 @@ function read(req, res) {
 function idMatch(req, res, next) {
     const { orderId } = req.params
     const { data: { id } = {} } = req.body
-    if (id === dishId || !id) {
+    if (id === orderId || !id) {
         return next()
     }
     next({
@@ -138,7 +127,7 @@ function update(req, res) {
 }
 
 function isStatusPending(req, res, next) {
-    const { data: { status } = {} } = req.body
+    const status = res.locals.order.status
     if (status !== "pending") {
         next({
             status: 400,
@@ -148,7 +137,7 @@ function isStatusPending(req, res, next) {
     return next()
 }
 
-function destroy(req, res) {
+function destroy(req, res, next) {
     const { orderId } = req.params
     const index = orders.findIndex((order) => order.id === orderId)
     const deletedOrders = orders.splice(index, 1)
@@ -160,8 +149,7 @@ module.exports = {
     create: [
         bodyDataHas("deliverTo"),
         bodyDataHas("mobileNumber"),
-        bodyDataHas("status"),
-        bodyDataHasDish,
+        bodyDataHas("dishes"),
         dishesPropertyIsValid,
         dishQuantityIsValid,
         create,
@@ -174,7 +162,7 @@ module.exports = {
         bodyDataHas("deliverTo"),
         bodyDataHas("mobileNumber"),
         bodyDataHas("status"),
-        bodyDataHasDish,
+        bodyDataHas("dishes"),
         dishesPropertyIsValid,
         dishQuantityIsValid,
         orderExists,
